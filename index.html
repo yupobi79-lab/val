@@ -1,538 +1,581 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 전적 대시보드</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #ff4655;
-            --primary-glow: rgba(255, 70, 85, 0.5);
-            --bg-dark: #060b10;
-            --bg-panel: rgba(15, 25, 35, 0.7);
-            --bg-card: rgba(26, 38, 52, 0.6);
-            --text-main: #ece8e1;
-            --text-dim: #768079;
-            --border-glass: rgba(255, 255, 255, 0.05);
-            --sidebar-width: 240px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VALTRACK</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red: #ff4655;
+      --bg: #0f1923;
+      --bg2: #1a2634;
+      --bg3: #243447;
+      --text: #ece8e1;
+      --muted: #768079;
+      --border: rgba(255,70,85,0.2);
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(255,70,85,0.03) 60px,rgba(255,70,85,0.03) 61px),
+        repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(255,70,85,0.03) 60px,rgba(255,70,85,0.03) 61px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .wrap { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 60px 24px; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-font-smoothing: antialiased;
-        }
+    /* 헤더 */
+    .header { text-align: center; margin-bottom: 60px; }
+    .logo { font-family: 'Rajdhani', sans-serif; font-size: 52px; font-weight: 700; letter-spacing: 6px; color: var(--text); line-height: 1; }
+    .logo span { color: var(--red); }
+    .tagline { font-size: 12px; letter-spacing: 4px; color: var(--muted); margin-top: 8px; text-transform: uppercase; }
 
-        body {
-            background: var(--bg-dark);
-            color: var(--text-main);
-            font-family: 'Noto Sans KR', sans-serif;
-            min-height: 100vh;
-            overflow: hidden;
-            display: flex;
-        }
+    /* 검색창 */
+    .search-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .search-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px; height: 100%;
+      background: var(--red);
+      border-radius: 4px 0 0 4px;
+    }
+    .search-label { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 16px; }
+    .search-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .input-group { display: flex; gap: 8px; flex: 1; min-width: 260px; align-items: center; }
+    input {
+      background: var(--bg3);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 2px;
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input::placeholder { color: var(--muted); font-weight: 400; }
+    input:focus { border-color: var(--red); }
+    #name-input { flex: 2; }
+    #tag-input { flex: 1; max-width: 120px; }
+    .hash { color: var(--red); font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; flex-shrink: 0; }
+    .search-btn {
+      background: var(--red);
+      border: none;
+      border-radius: 2px;
+      color: white;
+      cursor: pointer;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      padding: 12px 28px;
+      text-transform: uppercase;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .search-btn:hover { background: #e03a47; }
+    .search-btn:active { transform: scale(0.97); }
+    .search-btn:disabled { background: var(--bg3); color: var(--muted); cursor: not-allowed; }
 
-        .bg-mesh {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(255, 70, 85, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, rgba(74, 222, 128, 0.03) 0%, transparent 40%);
-            background-color: var(--bg-dark);
-        }
+    /* API 키 입력 */
+    .api-notice {
+      background: rgba(255,70,85,0.06);
+      border: 1px solid rgba(255,70,85,0.15);
+      border-radius: 4px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .api-notice span { flex: 1; min-width: 200px; line-height: 1.6; }
+    .api-notice a { color: var(--red); text-decoration: none; }
+    .api-notice a:hover { text-decoration: underline; }
+    #api-key-input {
+      font-size: 13px;
+      padding: 8px 12px;
+      flex: 2;
+      min-width: 200px;
+      letter-spacing: 0.5px;
+    }
 
-        /* Sidebar */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: rgba(10, 15, 20, 0.8);
-            border-right: 1px solid var(--border-glass);
-            backdrop-filter: blur(20px);
-            display: flex;
-            flex-direction: column;
-            padding: 30px 0;
-            z-index: 100;
-        }
+    /* 로딩 */
+    .loading { display: none; text-align: center; padding: 40px; }
+    .loading-bar { width: 200px; height: 2px; background: var(--bg3); margin: 0 auto 16px; border-radius: 2px; overflow: hidden; }
+    .loading-bar::after {
+      content: '';
+      display: block;
+      height: 100%;
+      width: 40%;
+      background: var(--red);
+      animation: slide 1s ease-in-out infinite;
+      border-radius: 2px;
+    }
+    @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+    .loading p { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
 
-        .nav-list {
-            list-style: none;
-            flex: 1;
-        }
+    /* 에러 */
+    .error-msg {
+      display: none;
+      background: rgba(255,70,85,0.1);
+      border: 1px solid rgba(255,70,85,0.3);
+      border-radius: 4px;
+      color: #ff6b77;
+      font-size: 13px;
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      letter-spacing: 0.5px;
+      line-height: 1.6;
+    }
 
-        .nav-item {
-            padding: 14px 30px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: var(--text-dim);
-            transition: all 0.2s;
-            font-size: 15px;
-            font-weight: 500;
-            position: relative;
-        }
+    /* 결과 */
+    .result { display: none; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
-        .nav-item:hover { color: var(--text-main); background: rgba(255, 255, 255, 0.03); }
-        .nav-item.active { color: var(--primary); background: rgba(255, 70, 85, 0.05); }
-        .nav-item.active::after {
-            content: ''; position: absolute; left: 0; top: 20%; height: 60%; width: 3px;
-            background: var(--primary); box-shadow: 0 0 10px var(--primary-glow);
-        }
+    /* 플레이어 헤더 */
+    .player-header {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 28px 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .player-header::after {
+      content: '';
+      position: absolute;
+      right: -20px; top: -20px;
+      width: 140px; height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,70,85,0.08) 0%, transparent 70%);
+    }
+    .rank-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .rank-icon img { width: 56px; height: 56px; object-fit: contain; }
+    .rank-icon-text {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--red);
+      letter-spacing: 1px;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .player-info { flex: 1; }
+    .player-name { font-family: 'Rajdhani', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: 2px; line-height: 1; }
+    .player-tag { color: var(--red); }
+    .player-meta { font-size: 11px; letter-spacing: 2px; color: var(--muted); margin-top: 6px; text-transform: uppercase; }
+    .rank-text { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 600; margin-top: 4px; }
 
-        /* Main Container */
-        .main-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
+    /* 스탯 그리드 */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid rgba(255,70,85,0.4);
+      border-radius: 4px;
+      padding: 28px 28px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 2px; width: 100%;
+      background: linear-gradient(90deg, var(--red) 0%, transparent 100%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .stat-card:hover::before { opacity: 1; }
+    .stat-label { font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+    .stat-value { font-family: 'Rajdhani', sans-serif; font-size: 48px; font-weight: 700; letter-spacing: 1px; line-height: 1; color: var(--text); }
+    .stat-unit { font-size: 18px; font-weight: 400; color: var(--muted); margin-left: 4px; }
+    .stat-sub { font-size: 12px; color: var(--muted); margin-top: 8px; letter-spacing: 0.5px; }
 
-        .top-header {
-            padding: 50px 60px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            border-bottom: 1px solid var(--border-glass);
-            background: linear-gradient(to bottom, rgba(255, 70, 85, 0.05), transparent);
-        }
+    /* 헤드샷 게이지 */
+    .hs-gauge { margin-top: 16px; }
+    .hs-bar-bg { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+    .hs-bar-fill { height: 100%; background: var(--red); border-radius: 2px; transition: width 1.2s cubic-bezier(0.16,1,0.3,1); width: 0%; }
+    .hs-labels { display: flex; justify-content: space-between; margin-top: 6px; }
+    .hs-labels span { font-size: 10px; color: var(--muted); letter-spacing: 1px; }
 
-        .user-name-title {
-            font-size: 56px;
-            font-weight: 900;
-            color: var(--text-main);
-            letter-spacing: -2px;
-            line-height: 1.1;
-            text-transform: uppercase;
-        }
+    /* 전적 */
+    .record-row { display: flex; gap: 16px; }
+    .mini-stat { flex: 1; text-align: center; }
+    .mini-label { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+    .mini-value { font-family: 'Rajdhani', sans-serif; font-size: 26px; font-weight: 700; }
+    .mini-value.win { color: #4ade80; }
+    .mini-value.loss { color: var(--red); }
+    .mini-value.draw { color: var(--muted); }
+    .divider-v { width: 1px; background: var(--border); margin: 8px 0; }
+    .wr-bar { margin-top: 20px; }
+    .wr-labels { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .wr-labels span { font-size: 11px; letter-spacing: 1px; }
+    .wr-pct { font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; color: #4ade80; }
+    .wr-bar-bg { height: 6px; background: rgba(255,70,85,0.2); border-radius: 3px; overflow: hidden; }
+    .wr-bar-fill { height: 100%; background: #4ade80; border-radius: 3px; transition: width 1.2s cubic-bezier(0.16,1,0.3,1); width: 0%; }
 
-        .user-tag-subtitle {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 28px;
-            color: var(--primary);
-            font-weight: 700;
-            opacity: 0.8;
-            margin-top: -5px;
-        }
+    /* API 상태 뱃지 */
+    .api-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 2px;
+      margin-bottom: 24px;
+    }
+    .api-status.live { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+    .api-status.demo { background: rgba(255,70,85,0.1); color: var(--red); border: 1px solid rgba(255,70,85,0.3); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
-        /* Content Area */
-        .content-scroll { padding: 40px 60px; }
+    .disclaimer { margin-top: 32px; text-align: center; font-size: 11px; color: var(--muted); letter-spacing: 1px; opacity: 0.6; }
 
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            padding: 35px;
-            backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .stat-card:hover { transform: translateY(-5px); border-color: rgba(255, 70, 85, 0.3); }
-        
-        .stat-card.clickable { cursor: pointer; }
-        .stat-card.clickable:active { transform: scale(0.98); }
-
-        .stat-label {
-            font-size: 14px;
-            color: var(--text-dim);
-            margin-bottom: 15px;
-            display: block;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .stat-value {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 48px;
-            font-weight: 700;
-            color: var(--text-main);
-            line-height: 1;
-        }
-
-        .stat-value span { font-size: 20px; color: var(--text-dim); margin-left: 5px; }
-
-        .tier-display { display: flex; align-items: center; gap: 20px; }
-        .tier-icon { width: 70px; height: 70px; object-fit: contain; }
-        .tier-info .name { font-size: 28px; font-weight: 700; color: #fff; line-height: 1.2; }
-        .tier-info .points { font-family: 'Rajdhani', sans-serif; font-size: 16px; color: var(--text-dim); margin-top: 5px; }
-
-        .edit-badge {
-            position: absolute; top: 15px; right: 15px;
-            font-size: 10px; padding: 4px 10px; border-radius: 4px;
-            background: rgba(255,255,255,0.08); color: var(--text-dim);
-            letter-spacing: 1px;
-        }
-
-        /* Modal for Tier Edit */
-        .modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-            display: none; align-items: center; justify-content: center; z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: var(--bg-panel); border: 1px solid var(--primary);
-            padding: 40px; border-radius: 20px; width: 450px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
-        .modal-content h3 { margin-bottom: 25px; font-size: 24px; text-align: center; }
-        .tier-select-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-        }
-        .tier-opt {
-            padding: 15px 10px; border: 1px solid var(--border-glass); border-radius: 12px;
-            text-align: center; cursor: pointer; transition: 0.2s;
-            background: rgba(255,255,255,0.02);
-        }
-        .tier-opt:hover { background: rgba(255,255,255,0.08); border-color: var(--text-dim); }
-        .tier-opt.active { border-color: var(--primary); background: rgba(255,70,85,0.15); box-shadow: 0 0 15px rgba(255,70,85,0.2); }
-        .tier-opt img { width: 40px; margin-bottom: 8px; }
-        .tier-opt span { display: block; font-size: 11px; font-weight: 600; color: var(--text-dim); }
-        .tier-opt.active span { color: var(--text-main); }
-
-        /* AI Analysis Buttons */
-        .page-section { display: none; animation: fadeIn 0.4s ease; }
-        .page-section.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .analysis-upload-zone {
-            background: var(--bg-panel); border: 2px dashed rgba(255,255,255,0.1);
-            border-radius: 24px; padding: 80px; text-align: center; cursor: pointer;
-            transition: 0.3s;
-        }
-        .analysis-upload-zone:hover { border-color: var(--primary); background: rgba(255, 70, 85, 0.03); }
-
-        .btn-action {
-            background: var(--primary); color: white; border: none; padding: 16px 32px;
-            border-radius: 10px; font-weight: 700; cursor: pointer; text-transform: uppercase;
-            letter-spacing: 1px; transition: 0.3s;
-        }
-        .btn-action:hover { background: #ff5d6a; box-shadow: 0 0 20px var(--primary-glow); transform: scale(1.02); }
-
-        /* Scanning Overlay */
-        .scanning-overlay {
-            position: fixed; inset: 0; background: rgba(6, 11, 16, 0.98); z-index: 2000;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .scan-bar { width: 350px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; position: relative; overflow: hidden; margin: 25px 0; }
-        .scan-bar-fill { height: 100%; width: 0%; background: var(--primary); box-shadow: 0 0 20px var(--primary); transition: width 0.1s; }
-        
-        /* History Table */
-        .history-table {
-            width: 100%; border-collapse: collapse; background: var(--bg-card);
-            border-radius: 16px; overflow: hidden; margin-top: 25px;
-            border: 1px solid var(--border-glass);
-        }
-        .history-table th, .history-table td { padding: 20px 25px; text-align: left; }
-        .history-table th { background: rgba(0,0,0,0.4); color: var(--text-dim); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
-        .history-table tr { border-bottom: 1px solid var(--border-glass); transition: 0.2s; }
-        .history-table tr:hover { background: rgba(255,255,255,0.02); }
-        .history-table tr:last-child { border-bottom: none; }
-        
-    </style>
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .logo { font-size: 36px; }
+      .stat-value { font-size: 36px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="bg-mesh"></div>
+<div class="wrap">
 
-    <!-- 티어 변경 모달 -->
-    <div class="modal" id="tier-modal">
-        <div class="modal-content">
-            <h3>티어 직접 선택</h3>
-            <div class="tier-select-grid" id="tier-options">
-                <!-- 티어 옵션들이 JS로 주입됩니다 -->
-            </div>
-            <button class="btn-action" style="width: 100%; margin-top: 30px;" onclick="closeModal()">취소</button>
+  <div class="header">
+    <div class="logo">VAL<span>TRACK</span></div>
+    <div class="tagline">Valorant Statistics Tracker</div>
+  </div>
+
+  <!-- API 키 안내 -->
+  <div class="api-notice">
+    <span>
+      🔑 <strong style="color: var(--text);">HenrikDev API 키 (선택사항)</strong> —
+      키 없이도 검색 가능하나 하루 요청 제한이 있어요.
+      무료 키 발급: <a href="https://docs.henrikdev.xyz/valorant/authorization" target="_blank">docs.henrikdev.xyz</a>
+    </span>
+    <input type="text" id="api-key-input" placeholder="HDEV-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+  </div>
+
+  <!-- 검색창 -->
+  <div class="search-box">
+    <div class="search-label">플레이어 검색</div>
+    <div class="search-row">
+      <div class="input-group">
+        <input type="text" id="name-input" placeholder="닉네임" />
+        <div class="hash">#</div>
+        <input type="text" id="tag-input" placeholder="KR1" maxlength="8" />
+      </div>
+      <button class="search-btn" id="search-btn" onclick="doSearch()">검색</button>
+    </div>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+  <div class="loading" id="loading">
+    <div class="loading-bar"></div>
+    <p>데이터 불러오는 중...</p>
+  </div>
+
+  <div class="result" id="result">
+    <div id="api-status-badge" class="api-status live"><div class="dot"></div><span>LIVE DATA</span></div>
+
+    <div class="player-header">
+      <div class="rank-icon" id="rank-icon">
+        <div class="rank-icon-text" id="rank-icon-text">—</div>
+      </div>
+      <div class="player-info">
+        <div class="player-name">
+          <span id="display-name">—</span><span class="player-tag" id="display-tag"></span>
         </div>
+        <div class="player-meta" id="player-meta">불러오는 중...</div>
+        <div class="rank-text" id="rank-text" style="color: var(--muted);">—</div>
+      </div>
     </div>
 
-    <!-- 스캐닝 오버레이 -->
-    <div class="scanning-overlay" id="scan-overlay">
-        <div style="font-size: 64px; margin-bottom: 20px; animation: bounce 2s infinite;">🤖</div>
-        <div style="font-family: 'Rajdhani'; font-size: 24px; letter-spacing: 8px; color: var(--primary); font-weight: 700;">AI DEEP ANALYSIS</div>
-        <div class="scan-bar">
-            <div class="scan-bar-fill" id="scan-fill"></div>
+    <div class="stats-grid">
+      <!-- 전적 카드 -->
+      <div class="stat-card">
+        <div class="stat-label">전적 (최근 경쟁전)</div>
+        <div class="record-row">
+          <div class="mini-stat">
+            <div class="mini-label">승</div>
+            <div class="mini-value win" id="wins">—</div>
+          </div>
+          <div class="divider-v"></div>
+          <div class="mini-stat">
+            <div class="mini-label">패</div>
+            <div class="mini-value loss" id="losses">—</div>
+          </div>
+          <div class="divider-v"></div>
+          <div class="mini-stat">
+            <div class="mini-label">무</div>
+            <div class="mini-value draw" id="draws">—</div>
+          </div>
         </div>
-        <div id="scan-pct" style="font-family: 'Rajdhani'; font-size: 32px; font-weight: 700;">0%</div>
-        <div id="scan-status" style="margin-top: 10px; color: var(--text-dim); font-size: 14px;">데이터 동기화 중...</div>
+        <div class="wr-bar">
+          <div class="wr-labels">
+            <span style="color: var(--muted); font-size: 11px; letter-spacing: 1px;">승률</span>
+            <span class="wr-pct" id="wr-pct">—%</span>
+          </div>
+          <div class="wr-bar-bg">
+            <div class="wr-bar-fill" id="wr-bar-fill"></div>
+          </div>
+        </div>
+        <div class="stat-sub" id="total-games">총 — 게임</div>
+      </div>
+
+      <!-- 헤드샷 카드 -->
+      <div class="stat-card">
+        <div class="stat-label">헤드샷율 (최근 매치)</div>
+        <div class="stat-value" id="hs-value">—<span class="stat-unit">%</span></div>
+        <div class="hs-gauge">
+          <div class="hs-bar-bg">
+            <div class="hs-bar-fill" id="hs-bar"></div>
+          </div>
+          <div class="hs-labels">
+            <span>0%</span>
+            <span id="hs-tier">—</span>
+            <span>60%+</span>
+          </div>
+        </div>
+        <div class="stat-sub" id="hs-sub">최근 — 게임 기준</div>
+      </div>
     </div>
 
-    <!-- 사이드바 -->
-    <aside class="sidebar">
-        <div style="padding: 0 30px 40px; font-family: 'Rajdhani'; font-size: 24px; font-weight: 800; letter-spacing: 2px;">
-            AI BOARD
-        </div>
-        <ul class="nav-list">
-            <li class="nav-item active" onclick="switchPage('overview')"><i>📊</i><span>전적 대시보드</span></li>
-            <li class="nav-item" onclick="switchPage('analysis')"><i>🎥</i><span>영상 AI 분석</span></li>
-        </ul>
-        <div style="padding: 30px; font-size: 11px; color: var(--text-dim); opacity: 0.4;">
-            © 2026 AI DASHBOARD<br>PRO ANALYTICS
-        </div>
-    </aside>
+    <div class="disclaimer">
+      ※ HenrikDev 비공식 API 사용 · Riot Games 공식 서비스 아님 · 데이터 최대 수분 지연 가능
+    </div>
+  </div>
 
-    <main class="main-container">
-        <!-- 상단 헤더: 이름을 크게 제목처럼 배치 -->
-        <header class="top-header">
-            <h1 class="user-name-title">나는 아무것도 할수없었다</h1>
-            <div class="user-tag-subtitle">#아이언1</div>
-        </header>
+</div>
 
-        <div class="content-scroll">
-            
-            <!-- 대시보드 페이지 -->
-            <section id="page-overview" class="page-section active">
-                <div class="dashboard-grid">
-                    <!-- 티어 카드: 변경 가능 -->
-                    <div class="stat-card clickable" onclick="openTierModal()">
-                        <span class="edit-badge">변경하려면 클릭</span>
-                        <span class="stat-label">현재 티어</span>
-                        <div class="tier-display">
-                            <img id="tier-img" src="" alt="Tier" class="tier-icon">
-                            <div class="tier-info">
-                                <div class="name" id="tier-name">데이터 로딩...</div>
-                                <div class="points" id="tier-points">0 LP</div>
-                            </div>
-                        </div>
-                    </div>
+<script>
+const REGION = 'ap'; // 한국 서버
 
-                    <!-- 헤드샷율 카드: 한국어 패치 -->
-                    <div class="stat-card">
-                        <span class="stat-label">에임 정밀도 (헤드샷율)</span>
-                        <div class="stat-value" id="dash-hs">0.0<span>%</span></div>
-                        <div style="margin-top: 12px; font-size: 12px; color: var(--text-dim);">평균 데이터 기반 산출</div>
-                    </div>
+const RANK_COLORS = {
+  'Iron': '#6b7280', 'Bronze': '#cd7f32', 'Silver': '#9ca3af',
+  'Gold': '#f59e0b', 'Platinum': '#22d3ee', 'Diamond': '#a78bfa',
+  'Ascendant': '#34d399', 'Immortal': '#f87171', 'Radiant': '#fde68a',
+  'Unranked': '#768079'
+};
 
-                    <!-- 전투점수 카드: 한국어 패치 -->
-                    <div class="stat-card">
-                        <span class="stat-label">전투 점수 (ACS)</span>
-                        <div class="stat-value" id="dash-acs">0<span>pts</span></div>
-                        <div style="margin-top: 12px; font-size: 12px; color: var(--text-dim);">성장 분석: <span id="growth-tag" style="color:#4ade80">대기 중</span></div>
-                    </div>
-                </div>
+function getHSTier(pct) {
+  if (pct >= 40) return '최상위 (TOP 5%)';
+  if (pct >= 30) return '상위권';
+  if (pct >= 20) return '평균';
+  if (pct >= 10) return '낮음';
+  return '매우 낮음';
+}
 
-                <div style="margin-top: 60px;">
-                    <div style="font-weight: 800; font-size: 20px; border-left: 4px solid var(--primary); padding-left: 15px; margin-bottom: 25px;">AI 분석 히스토리</div>
-                    <table class="history-table">
-                        <thead>
-                            <tr>
-                                <th>분석 날짜</th>
-                                <th>대상 파일</th>
-                                <th>헤드샷율</th>
-                                <th>전투점수</th>
-                                <th>티어 포인트</th>
-                                <th>AI 상세 코멘트</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-body">
-                            <!-- JS로 내역 주입 -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function showFlex(id) { document.getElementById(id).style.display = 'flex'; }
 
-            <!-- 분석 페이지 -->
-            <section id="page-analysis" class="page-section">
-                <div style="margin-bottom: 30px;">
-                    <h2 style="font-size: 32px; font-weight: 800;">영상 데이터 업로드</h2>
-                    <p style="color: var(--text-dim); margin-top: 5px;">경쟁전 하이라이트 영상을 업로드하면 AI가 플레이 수준을 정밀 분석합니다.</p>
-                </div>
-                
-                <div class="analysis-upload-zone" onclick="document.getElementById('file-input').click()">
-                    <div style="font-size: 64px; margin-bottom: 20px;">📤</div>
-                    <h3 style="font-size: 24px;">분석할 비디오 파일 선택</h3>
-                    <p style="color:var(--text-dim); margin-top:15px; line-height: 1.6;">
-                        MP4, MOV 파일 지원 (최대 2GB)<br>
-                        AI가 프레임별 에임 궤적을 추적하여 기록에 남깁니다.
-                    </p>
-                    <input type="file" id="file-input" style="display:none" onchange="runAnalysis(event)">
-                </div>
-            </section>
+function getApiKey() {
+  return document.getElementById('api-key-input').value.trim();
+}
 
-        </div>
-    </main>
+function buildHeaders() {
+  const key = getApiKey();
+  const h = { 'Accept': 'application/json' };
+  if (key) h['Authorization'] = key;
+  return h;
+}
 
-    <script>
-        // 티어 데이터 정의
-        const TIERS = [
-            {id: 0, name: '언랭크', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/0/smallicon.png'},
-            {id: 3, name: '아이언 1', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/3/smallicon.png'},
-            {id: 4, name: '아이언 2', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/4/smallicon.png'},
-            {id: 5, name: '아이언 3', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/5/smallicon.png'},
-            {id: 6, name: '브론즈 1', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/6/smallicon.png'},
-            {id: 9, name: '실버 1', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/9/smallicon.png'},
-            {id: 12, name: '골드 1', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/12/smallicon.png'},
-            {id: 15, name: '플래티넘 1', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/15/smallicon.png'},
-            {id: 18, name: '다이아몬드 1', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/18/smallicon.png'},
-            {id: 21, name: '초월자 1', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/21/smallicon.png'},
-            {id: 24, name: '불멸 1', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/24/smallicon.png'},
-            {id: 27, name: '레디언트', img: 'https://media.valorant-api.com/competitivetiers/03621f13-43b2-ad59-3954-4d8d74d2133f/27/smallicon.png'}
-        ];
+async function doSearch() {
+  const name = document.getElementById('name-input').value.trim();
+  const tag = document.getElementById('tag-input').value.trim() || 'KR1';
 
-        // 앱 상태 관리
-        let appState = {
-            tierIdx: parseInt(localStorage.getItem('user_tier_idx')) || 1, // 아이언1 기본
-            lp: parseInt(localStorage.getItem('user_lp')) || 42,
-            history: JSON.parse(localStorage.getItem('ai_analysis_history') || '[]')
-        };
+  if (!name) {
+    document.getElementById('error-msg').textContent = '닉네임을 입력해주세요.';
+    show('error-msg');
+    return;
+  }
 
-        function saveState() {
-            localStorage.setItem('user_tier_idx', appState.tierIdx);
-            localStorage.setItem('user_lp', appState.lp);
-            localStorage.setItem('ai_analysis_history', JSON.stringify(appState.history));
+  hide('error-msg');
+  hide('result');
+  show('loading');
+  document.getElementById('search-btn').disabled = true;
+
+  try {
+    await loadPlayerData(name, tag);
+  } catch (e) {
+    document.getElementById('error-msg').innerHTML =
+      `오류: ${e.message}<br><small style="opacity:0.7">닉네임/태그 확인 또는 API 요청 한도 초과일 수 있어요. 잠시 후 다시 시도해주세요.</small>`;
+    show('error-msg');
+    hide('result');
+  } finally {
+    hide('loading');
+    document.getElementById('search-btn').disabled = false;
+  }
+}
+
+async function loadPlayerData(name, tag) {
+  const headers = buildHeaders();
+  const encodedName = encodeURIComponent(name);
+  const encodedTag = encodeURIComponent(tag);
+
+  // 1. 계정 정보 + 랭크
+  const mmrRes = await fetch(
+    `https://api.henrikdev.xyz/valorant/v2/mmr/${REGION}/${encodedName}/${encodedTag}`,
+    { headers }
+  );
+  const mmrData = await mmrRes.json();
+
+  if (mmrData.status !== 200 || !mmrData.data) {
+    throw new Error(mmrData.message || '플레이어를 찾을 수 없습니다.');
+  }
+
+  // 2. 최근 매치 (전적 + 헤드샷용)
+  const matchRes = await fetch(
+    `https://api.henrikdev.xyz/valorant/v1/lifetime/matches/${REGION}/${encodedName}/${encodedTag}?mode=competitive&size=20`,
+    { headers }
+  );
+  const matchData = await matchRes.json();
+
+  // 렌더링
+  renderPlayer(name, tag, mmrData.data, matchData);
+}
+
+function renderPlayer(name, tag, mmr, matchData) {
+  document.getElementById('display-name').textContent = name;
+  document.getElementById('display-tag').textContent = ' #' + tag;
+
+  // 랭크 정보
+  const tier = mmr.current_data?.currenttierpatched || 'Unranked';
+  const tierName = tier.split(' ')[0];
+  const rankColor = RANK_COLORS[tierName] || '#ff4655';
+  const rr = mmr.current_data?.ranking_in_tier ?? '—';
+  const peakRank = mmr.highest_rank?.patched_tier || '—';
+
+  document.getElementById('rank-icon-text').textContent = tier.replace(' ', '\n');
+  document.getElementById('rank-icon-text').style.color = rankColor;
+  document.getElementById('rank-icon').style.borderColor = rankColor + '88';
+
+  // 랭크 이미지 있으면 표시
+  const rankImgUrl = mmr.current_data?.images?.small;
+  if (rankImgUrl) {
+    document.getElementById('rank-icon').innerHTML =
+      `<img src="${rankImgUrl}" alt="${tier}" onerror="this.parentElement.innerHTML='<div class=\\'rank-icon-text\\' style=\\'color:${rankColor}\\'>${tier}</div>'">`;
+  }
+
+  document.getElementById('rank-text').textContent = tier + (rr !== '—' ? `  ·  ${rr} RR` : '');
+  document.getElementById('rank-text').style.color = rankColor;
+  document.getElementById('player-meta').textContent = `피크: ${peakRank}  ·  Asia Pacific`;
+
+  // 전적 계산 (최근 20경기)
+  let wins = 0, losses = 0, draws = 0;
+  let totalHS = 0, totalShots = 0, matchCount = 0;
+
+  if (matchData?.data && matchData.data.length > 0) {
+    matchData.data.forEach(match => {
+      const stats = match.stats;
+      if (!stats) return;
+
+      const won = match.teams?.red === 'Victory' || match.teams?.blue === 'Victory'
+        ? (stats.team?.toLowerCase() === 'red' ? match.teams.red === 'Victory' : match.teams.blue === 'Victory')
+        : null;
+
+      // 승/패/무 처리
+      const result = match.meta?.result || stats?.result;
+      if (result === 'Win') wins++;
+      else if (result === 'Loss') losses++;
+      else if (result === 'Draw') draws++;
+      else {
+        // 결과 필드가 다를 경우 대비
+        const teamRed = match.teams?.red;
+        const teamBlue = match.teams?.blue;
+        const myTeam = stats.team;
+        if (myTeam && teamRed && teamBlue) {
+          const myScore = myTeam.toLowerCase() === 'red' ? teamRed : teamBlue;
+          const oppScore = myTeam.toLowerCase() === 'red' ? teamBlue : teamRed;
+          if (myScore > oppScore) wins++;
+          else if (myScore < oppScore) losses++;
+          else draws++;
         }
+      }
 
-        // UI 업데이트
-        function updateAllUI() {
-            const tier = TIERS[appState.tierIdx];
-            document.getElementById('tier-img').src = tier.img;
-            document.getElementById('tier-name').textContent = tier.name;
-            document.getElementById('tier-points').textContent = appState.lp + ' LP';
-            
-            if (appState.history.length > 0) {
-                const avgHS = (appState.history.reduce((a,b) => a+b.hs, 0) / appState.history.length).toFixed(1);
-                const avgACS = Math.floor(appState.history.reduce((a,b) => a+b.acs, 0) / appState.history.length);
-                document.getElementById('dash-hs').innerHTML = `${avgHS}<span>%</span>`;
-                document.getElementById('dash-acs').innerHTML = `${avgACS}<span>pts</span>`;
-                document.getElementById('growth-tag').textContent = avgACS > 200 ? (avgACS > 250 ? '매우 높음' : '높음') : '보통';
-                document.getElementById('growth-tag').style.color = avgACS > 200 ? '#4ade80' : '#facc15';
-            }
+      // 헤드샷 계산
+      if (stats.headshots !== undefined) {
+        totalHS += stats.headshots || 0;
+        totalShots += (stats.headshots || 0) + (stats.bodyshots || 0) + (stats.legshots || 0);
+        matchCount++;
+      }
+    });
+  }
 
-            const body = document.getElementById('history-body');
-            if (appState.history.length === 0) {
-                body.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-dim); padding: 50px;">현재까지 분석된 영상 데이터가 없습니다.</td></tr>';
-            } else {
-                body.innerHTML = appState.history.map(item => `
-                    <tr>
-                        <td>${item.date}</td>
-                        <td style="font-family: monospace; font-size: 13px; color: #ccc;">${item.file}</td>
-                        <td style="color:var(--primary); font-weight: 700;">${item.hs}%</td>
-                        <td style="color:#4ade80; font-weight: 700;">${item.acs}</td>
-                        <td><span style="color:#4ade80; font-weight: 700;">+${item.plusLP} LP</span></td>
-                        <td style="font-size:12px; color:#aaa; line-height: 1.4;">${item.msg}</td>
-                    </tr>
-                `).join('');
-            }
-        }
+  const total = wins + losses + draws;
+  const wr = total > 0 ? ((wins / total) * 100).toFixed(1) : '0.0';
+  const hsPct = totalShots > 0 ? ((totalHS / totalShots) * 100).toFixed(1) : '0.0';
 
-        // 페이지 전환
-        function switchPage(p) {
-            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(`page-${p}`).classList.add('active');
-            event.currentTarget.classList.add('active');
-        }
+  document.getElementById('wins').textContent = wins;
+  document.getElementById('losses').textContent = losses;
+  document.getElementById('draws').textContent = draws;
+  document.getElementById('wr-pct').textContent = wr + '%';
+  document.getElementById('total-games').textContent = `총 ${total} 게임 (최근 20경기)`;
 
-        // 티어 변경 모달 제어
-        function openTierModal() {
-            const container = document.getElementById('tier-options');
-            container.innerHTML = TIERS.map((t, index) => `
-                <div class="tier-opt ${index === appState.tierIdx ? 'active' : ''}" onclick="selectTier(${index})">
-                    <img src="${t.img}">
-                    <span>${t.name}</span>
-                </div>
-            `).join('');
-            document.getElementById('tier-modal').classList.add('active');
-        }
+  document.getElementById('hs-value').innerHTML = hsPct + '<span class="stat-unit">%</span>';
+  document.getElementById('hs-tier').textContent = getHSTier(parseFloat(hsPct));
+  document.getElementById('hs-sub').textContent = `최근 ${matchCount}게임 기준`;
 
-        function selectTier(idx) {
-            appState.tierIdx = idx;
-            saveState();
-            document.getElementById('tier-modal').classList.remove('active');
-            updateAllUI();
-        }
+  // API 상태 뱃지
+  document.getElementById('api-status-badge').className = 'api-status live';
+  document.getElementById('api-status-badge').innerHTML = '<div class="dot"></div><span>LIVE DATA</span>';
 
-        function closeModal() {
-            document.getElementById('tier-modal').classList.remove('active');
-        }
+  show('result');
 
-        // AI 영상 분석 시뮬레이션
-        function runAnalysis(e) {
-            const file = e.target.files[0];
-            if(!file) return;
+  setTimeout(() => {
+    document.getElementById('wr-bar-fill').style.width = wr + '%';
+    document.getElementById('hs-bar').style.width = Math.min(parseFloat(hsPct) / 60 * 100, 100) + '%';
+  }, 100);
+}
 
-            const overlay = document.getElementById('scan-overlay');
-            const fill = document.getElementById('scan-fill');
-            const pct = document.getElementById('scan-pct');
-            const status = document.getElementById('scan-status');
-
-            overlay.style.display = 'flex';
-            
-            let p = 0;
-            const statuses = [
-                "프레임별 데이터 추출 중...",
-                "에임 궤적 분석 중...",
-                "헤드샷 판정 대조 중...",
-                "전투 점수 계산 및 리포트 작성 중..."
-            ];
-
-            const itv = setInterval(() => {
-                p += Math.floor(Math.random() * 3) + 1;
-                if(p >= 100) {
-                    p = 100;
-                    clearInterval(itv);
-                    finishAnalysis(file.name);
-                }
-                fill.style.width = p + '%';
-                pct.textContent = p + '%';
-                status.textContent = statuses[Math.floor(p/26)];
-            }, 60);
-        }
-
-        function finishAnalysis(fileName) {
-            // 분석 결과 난수 생성 (분석한 것처럼 보이게)
-            const hs = parseFloat((Math.random() * 15 + 8).toFixed(1)); // 8% ~ 23%
-            const acs = Math.floor(Math.random() * 120 + 160); // 160 ~ 280
-            const plusLP = Math.floor(acs / 12); // 전투 점수에 비례해 LP 가산
-            
-            const comments = [
-                "에임 서칭 속도가 뛰어나지만 이동 중 사격 실수가 보입니다.",
-                "헤드라인 유지가 일관적입니다. 티어 대비 훌륭한 수준입니다.",
-                "스킬 연계 점수가 높으며 교전 승률을 유의미하게 높이고 있습니다.",
-                "전반적인 교전 센스가 우수하나 장전 타이밍 관리가 필요합니다."
-            ];
-
-            const result = {
-                date: new Date().toLocaleDateString(),
-                file: fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName,
-                hs: hs,
-                acs: acs,
-                plusLP: plusLP,
-                msg: comments[Math.floor(Math.random() * comments.length)]
-            };
-
-            // 점수 및 티어 업데이트 (분석한 결과대로 상승)
-            appState.lp += plusLP;
-            if(appState.lp >= 100) {
-                appState.lp -= 100;
-                if(appState.tierIdx < TIERS.length - 1) appState.tierIdx++;
-            }
-
-            appState.history.unshift(result);
-            saveState();
-            
-            setTimeout(() => {
-                document.getElementById('scan-overlay').style.display = 'none';
-                document.getElementById('scan-fill').style.width = '0%';
-                switchPage('overview');
-                updateAllUI();
-                alert(`[AI 분석 완료]\n\n에임 정밀도: ${hs}%\n전투 점수: ${acs}\n\n좋은 퍼포먼스로 ${plusLP} LP를 획득했습니다!`);
-            }, 500);
-        }
-
-        // 초기 로딩
-        window.onload = updateAllUI;
-    </script>
+// 엔터키
+['name-input', 'tag-input', 'api-key-input'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch();
+  });
+});
+</script>
 </body>
 </html>
